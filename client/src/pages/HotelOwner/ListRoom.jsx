@@ -1,10 +1,48 @@
 import React, { useState } from 'react'
 import Title from '../../components/Title'
-import { roomsDummyData } from '../../assets/assets'
+import { useAppContext } from '../../context/AppContext'
+import { useEffect } from 'react'
+import toast from 'react-hot-toast'
+
 
 const ListRoom = () => {
 
-    const [rooms, setRooms] = useState(roomsDummyData)
+    const [rooms, setRooms] = useState([])
+    const { axios, getToken, user, currency } = useAppContext()
+    const [loading, setLoading] = useState(true)
+
+    const fetchRooms = async () => {
+    setLoading(true)
+    try {
+      const { data } = await axios.get('/api/rooms/owner', { headers: { Authorization: `Bearer ${await getToken()}` } })
+      if (data.success) setRooms(data.rooms)
+      else toast.error(data.message)
+    } catch (error) {
+      toast.error(error.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const toggleAvailability = async (roomId) => {
+    try {
+      const { data } = await axios.post('/api/rooms/toggle-availability', { roomId }, { headers: { Authorization: `Bearer ${await getToken()}` } })
+      if (data.success) {
+        toast.success(data.message)
+        fetchRooms()
+      }
+      else {
+        toast.error(data.message)
+      }
+    } catch (error) {
+      toast.error(error.message)
+    } 
+  }
+
+   useEffect(() => {
+    if (user) fetchRooms()
+  }, [user])
+
   return (
     <div>
       <Title align='left' font='outfit' title='Room Listing'
@@ -42,7 +80,7 @@ const ListRoom = () => {
                   </td>
                   <td className='py-3 px-4 border-t border-gray-300 text-sm text-red-500 text-center'>
                     <label className='relative inline-flex items-center cursor-pointer text-gray-900 gap-3'>
-                      <input
+                      <input onChange={() => toggleAvailability(item._id)}
                         type="checkbox"
                         className='sr-only peer'
                         checked={item.isAvailable}

@@ -1,10 +1,62 @@
 import React, { useState } from 'react'
 import Title from '../../components/Title'
-import { assets, dashboardDummyData } from '../../assets/assets'
+import { assets } from '../../assets/assets'
+import { useAppContext } from '../../context/AppContext';
+import toast from 'react-hot-toast'
+import { useEffect } from 'react';
 
 const DashBoard = () => {
+  const { currency, user, getToken, axios } = useAppContext();
 
-    const [dashBoardData, setDashBoardData] = useState(dashboardDummyData);
+    const [dashBoardData, setDashBoardData] = useState({
+      bookings: [],
+    totalBookings: 0,
+    totalRevenue: 0,
+    });
+
+    const [loading, setLoading] = useState(false);
+
+
+  const fetchDashBoardData = async () => {
+    setLoading(true);
+    try {
+      const { data } = await axios.get('/api/bookings/hotel', {
+        headers: { Authorization: `Bearer ${await getToken()}` }
+      });
+      const dash = data.dashBoardData || data.dashboardData || {
+        bookings: [],
+        totalBookings: 0,
+        totalRevenue: 0,
+      };
+      setDashBoardData({
+        bookings: Array.isArray(dash.bookings) ? dash.bookings : [],
+        totalBookings: dash.totalBookings ?? 0,
+        totalRevenue: dash.totalRevenue ?? 0,
+      });
+    } catch (error) {
+      const msg = error?.response?.data?.message || error.message;
+      if (error.response?.status === 401) {
+        toast.error("Session expired. Please log in again.");
+        // Optionally, navigate to login
+      } else {
+        toast.error(msg);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchDashBoardData();
+    }
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="p-8 text-center text-gray-400">Loading dashboard...</div>
+    );
+  }
   return (
     <div>
       <Title
@@ -31,7 +83,7 @@ const DashBoard = () => {
           <div className='flex flex-col sm:ml-4 font-medium'>
             <p className='text-blue-500 text-lg'>Total Revenue</p>
             <p className='text-neutral-400 text-base'>
-              {(dashBoardData?.totalRevenue ?? 0)}
+              {currency} {(dashBoardData?.totalRevenue ?? 0)}
             </p>
           </div>
         </div>
@@ -66,7 +118,7 @@ const DashBoard = () => {
                     {item.room?.roomType ?? 'Unknown Room'}
                   </td>
                   <td className='py-3 px-4 text-gray-700 border-t border-gray-300 text-center'>
-                   $ {(item.totalPrice ?? 0)}
+                   {currency} {(item.totalPrice ?? 0)}
                   </td>
                   <td className='py-3 px-4 border-t border-gray-300 flex'>
                     <button

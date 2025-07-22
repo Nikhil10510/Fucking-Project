@@ -96,13 +96,13 @@ export const testimonials = [
 ];
 
 // Facility Icon
-export const facilityIcons = {
-    "Free WiFi": assets.freeWifiIcon,
-    "Free Breakfast": assets.freeBreakfastIcon,
-    "Room Service": assets.roomServiceIcon,
-    "Mountain View": assets.mountainIcon,
-    "Pool Access": assets.poolIcon,
-};
+export const facilityIcons = [
+  "Free WiFi",
+  "Free Breakfast",
+  "Room Service",
+  "Mountain View",
+  "Pool Access"
+];
 
 // For Room Details Page
 export const roomCommonData = [
